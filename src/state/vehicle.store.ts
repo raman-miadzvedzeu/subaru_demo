@@ -7,40 +7,54 @@ export type Vehicle = {
   Customer: string;
   ProductLookup: string;
   VIN: string;
+  Transmission: string;
+  Engine: string;
+  Year: number;
+  extColor: string;
+  intColor: string;
   VehicleLookup: string;
   ProductName: string;
 };
 
-type SubscriptionOption = {
+export type Service = {
   Id: string;
   Name: string;
   Rate: string;
 };
 
-type Service = {
+type SubscriptionOption = {
+  SubProducts?: Service[];
+} & Service;
+
+export type SubscriptionProduct = {
   Id: string;
-  ConciergeServices: string;
-  WiFi: string;
+  ProductId: string;
+  Name: string;
+  StartDate: Date;
+  EndDate?: Date;
 };
 
 type VehicleStore = {
   vehicles: Vehicle[];
   allVehicles: Vehicle[];
   subscriptionOptions: SubscriptionOption[];
-  services: Service | null;
+  services: Service[] | null;
   loading: boolean;
   error: string | null;
   selectedVehicle: Vehicle | null;
   selectedSubscriptionOption: SubscriptionOption | null;
+  currentSubscriptions: SubscriptionProduct[];
   fetchVehicles: () => Promise<void>;
   fetchAllVehicles: () => Promise<void>;
   fetchSubscriptionOptions: () => Promise<void>;
+  updateSubProducts: (subProducts: Service[]) => void;
   fetchServices: (vehicleId: string) => Promise<void>;
   selectVehicle: (vehicle: Vehicle) => void;
   selectSubscriptionOption: (subscriptionOption: SubscriptionOption) => void;
   upgradeSubscription: (
-    subscriptionOptionId: string
+    productIds: string[]
   ) => Promise<{ error?: string } | null>;
+  fetchCurrentSubscriptions: () => void;
 };
 
 const apiService = ApiService.getInstance();
@@ -54,6 +68,7 @@ export const useVehicleStore = create<VehicleStore>((set) => ({
   error: null,
   selectedVehicle: null,
   selectedSubscriptionOption: null,
+  currentSubscriptions: [],
 
   fetchVehicles: async () => {
     set({ loading: true, error: null });
@@ -96,11 +111,29 @@ export const useVehicleStore = create<VehicleStore>((set) => ({
   fetchServices: async (vehicleId: string) => {
     set({ loading: true, error: null });
     try {
-      const response = await apiService.getServices(vehicleId);
-      set({ services: response.queryResponse?.[0], loading: false });
+      const services = await apiService.getServices(vehicleId);
+      set({ services, loading: false });
     } catch (error: any) {
       set({ error: error.message, loading: false });
     }
+  },
+
+  fetchCurrentSubscriptions: async () => {
+    try {
+      const { queryResponse } = await apiService.getCurrentSubscriptions();
+      set({ currentSubscriptions: queryResponse, loading: false });
+    } catch {
+      set({ currentSubscriptions: [], loading: false });
+    }
+  },
+
+  updateSubProducts: async (SubProducts: Service[]) => {
+    set((state) => ({
+      selectedSubscriptionOption: {
+        ...state.selectedSubscriptionOption!,
+        SubProducts,
+      },
+    }));
   },
 
   selectVehicle: (selectedVehicle: Vehicle) => {
@@ -113,7 +146,14 @@ export const useVehicleStore = create<VehicleStore>((set) => ({
     set({ selectedSubscriptionOption });
   },
 
-  upgradeSubscription: async (selectedOptionId: string) => {
-    return apiService.upgradeSubscription(selectedOptionId);
+  upgradeSubscription: async (productIds: string[]) => {
+    try {
+      set({ loading: true });
+      return apiService.upgradeSubscription(productIds);
+    } catch (error: any) {
+      return { error: error };
+    } finally {
+      set({ loading: false });
+    }
   },
 }));

@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useRef, useEffect, FC } from "react";
+import { FC } from "react";
+import { Modal } from "./Modal";
 
 interface PaymentSuccessModalProps {
   open: boolean;
@@ -11,33 +12,15 @@ export const PaymentSuccessModal: FC<PaymentSuccessModalProps> = ({
   open,
   onClose,
 }) => {
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
-
   const router = useRouter();
-
-  useEffect(() => {
-    if (open) {
-      dialogRef.current?.showModal();
-    } else {
-      dialogRef.current?.close();
-      router.push("/");
-    }
-  }, [open]);
 
   const handleClose = () => {
     onClose();
-    dialogRef.current?.close();
-
+    router.push("/");
   };
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="rounded-lg p-6 bg-white shadow-lg max-w-md w-full border border-gray-300"
-      onClick={(e) => {
-        if (e.target === dialogRef.current) handleClose();
-      }}
-    >
+    <Modal open={open} onClose={handleClose}>
       <div className="text-center">
         <h2 className="text-2xl font-semibold text-green-600">
           Payment Successful!
@@ -52,6 +35,6 @@ export const PaymentSuccessModal: FC<PaymentSuccessModalProps> = ({
           Close
         </button>
       </div>
-    </dialog>
+    </Modal>
   );
 };

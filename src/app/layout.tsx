@@ -16,10 +16,6 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-// export const metadata: Metadata = {
-//   title: "Subaru demo",
-//   description: "Subaru demo website",
-// };
 
 export default function RootLayout({
   children,

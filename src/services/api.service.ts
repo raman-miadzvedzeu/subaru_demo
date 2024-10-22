@@ -26,8 +26,11 @@ export class ApiService {
       sql: `
             select
             cv.Id, cv.Model, cv.Customer, cv.ProductLookup,
-            cv.VIN, cv.VehicleLookup, p.Name as ProductName
+            cv.VIN, cv.VehicleLookup, p.Name as ProductName,
+            v.Year, v.vehicleTrim, v.Engine, v.Transmission,
+            v.extColor, v.intColor,
             from CustomerVehicles cv
+            join Vehicles v on cv.VehicleLookup = v.Id
             left join Product p on cv.ProductLookup = p.Id
             where cv.AccountId = ${process.env.NEXT_PUBLIC_ACCOUNT_ID}
         `,
@@ -52,8 +55,11 @@ export class ApiService {
   }
 
   public async getServices(vehicleId: string) {
-    return this.sendApiRequest(Method.POST, "/query", {
-      sql: `
+    const { queryResponse: servicesResponse } = await this.sendApiRequest(
+      Method.POST,
+      "/query",
+      {
+        sql: `
         select
           s.Id,
           s.Entitlement3 as ConciergeServices,
@@ -61,7 +67,46 @@ export class ApiService {
         from ServicePackage s
         where s.VehiclesId = ${vehicleId}
       `,
-    });
+      }
+    );
+    const [allowConcierge, allowWifi] = [
+      servicesResponse[0].ConciergeServices === "Optional",
+      servicesResponse[0].WiFi === "Available",
+    ];
+    if (allowConcierge || allowWifi) {
+      const services = [];
+      if (allowConcierge) {
+        services.push("'Starlink Concierge Service'");
+      }
+      if (allowWifi) {
+        services.push("'Wi-Fi Services'");
+      }
+      const { queryResponse: productsResponse } = await this.sendApiRequest(
+        Method.POST,
+        "/query",
+        {
+          sql: `
+          select
+            p.Id,
+            p.Name,
+            p.Rate
+          from product p
+          where p.Name in (${services.join(", ")})
+        `,
+        }
+      );
+      return productsResponse.map((row: { Id: string, Rate: string, Name: string }) => {
+        const Rate = row.Rate.split("<br/>").filter((rate: string) =>
+          rate.includes("$")
+        )[0];
+        return {
+          ...row,
+          Rate,
+        };
+      });
+    } else {
+      return [];
+    }
   }
 
   public async getAllVehicles() {
@@ -81,7 +126,9 @@ export class ApiService {
     return this.sendApiRequest(Method.POST, "/query", { sql });
   }
 
-  public async upgradeSubscription(selectedOptionId: string): Promise<{ error?: string } | null> {
+  public async upgradeSubscription(
+    productIds: string[]
+  ): Promise<{ error?: string } | null> {
     try {
       const subscriptionResponse = await this.sendApiRequest(
         Method.POST,
@@ -119,14 +166,14 @@ export class ApiService {
           };
         }
         this.sendApiRequest(Method.POST, "/ACCOUNT_PRODUCT", {
-          brmObjects: {
+          brmObjects: productIds.map(id => ({
             AccountId: process.env.NEXT_PUBLIC_ACCOUNT_ID,
             Status: "ACTIVE",
             Quantity: 1,
             StartDate: formatDate(new Date()),
             EndDate: null,
-            ProductId: selectedOptionId
-          }
+            ProductId: id,
+          })),
         });
         return null;
       } else {
@@ -135,6 +182,62 @@ export class ApiService {
     } catch {
       return { error: "Something went wrong" };
     }
+  }
+
+  public async getCurrentSubscriptions() {
+    return this.sendApiRequest(Method.POST, "/query", {
+      sql: `
+        select
+          ap.Id,
+          ap.ProductId,
+          p.Name,
+          ap.StartDate,
+          ap.EndDate
+        from account_product ap
+        join product p on ap.ProductId = p.Id
+        where ap.AccountId = '${process.env.NEXT_PUBLIC_ACCOUNT_ID}'
+        and (ap.EndDate is null or ap.EndDate > '${formatDate(new Date())}')
+        order by ap.EndDate desc
+      `,
+    });
+  }
+
+  public async cancelSubscription(accountProductId: string) {
+    return this.sendApiRequest(Method.PUT, "/ACCOUNT_PRODUCT", {
+      brmObjects: {
+        Id: accountProductId,
+        EndDate: formatDate(new Date()),
+      },
+    });
+  }
+
+  public async applyDiscount() {
+    const { queryResponse } = await this.getProducts(
+      `Name = '100% off Safety Plus'`
+    );
+    const selectedProductId = queryResponse[0].Id;
+    return this.sendApiRequest(Method.POST, "/ACCOUNT_PRODUCT", {
+      brmObjects: {
+        AccountId: process.env.NEXT_PUBLIC_ACCOUNT_ID,
+        Status: "ACTIVE",
+        Quantity: 1,
+        StartDate: formatDate(new Date()),
+        EndDate: null,
+        ProductId: selectedProductId,
+      },
+    });
+  }
+
+  private async getProducts(filter: string) {
+    return this.sendApiRequest(Method.POST, "/query", {
+      sql: `
+        select
+          p.Id,
+          p.Name
+        from product p
+        where ${filter}
+      `,
+    });
   }
 
   private initCredentials() {

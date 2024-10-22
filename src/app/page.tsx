@@ -7,79 +7,16 @@ export default function Home() {
 
   return (
     <div className="bg-gray-100">
-      {/* Vehicle Information */}
-      <div className="bg-gray-900 text-white p-4 flex items-center justify-center gap-14">
-        {/* Vehicle Information Section */}
-        <div className="flex items-center space-x-4">
-          <div className="bg-gray-700 p-2 rounded-full"></div>
-          <div>
-            <h3 className="text-sm font-semibold">{selectedVehicle?.Model}</h3>
-            <p className="text-xs text-gray-400">VIN: {selectedVehicle?.VIN}</p>
-            <a href="#" className="text-xs text-blue-400 hover:underline">
-              View Information
-            </a>
-          </div>
-        </div>
-
-        {/* Schedule Service Link */}
-        <div className="flex items-center space-x-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6 text-blue-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      <div className="bg-gray-900 text-white p-4 flex items-center pl-10">
+        <div>
+          <h3 className="text-sm font-semibold">{selectedVehicle?.Model}</h3>
+          <p className="text-xs text-white">VIN: {selectedVehicle?.VIN}</p>
+          <Link
+            href={`/vehicle/${selectedVehicle?.Id}`}
+            className="text-xs text-blue-400 hover:underline"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M8 7V3m8 4V3m5 4H3v14h18V7z"
-            />
-          </svg>
-          <a href="#" className="text-sm text-blue-400 hover:underline">
-            Schedule Service
-          </a>
-        </div>
-
-        {/* Vehicle Status Section */}
-        <div className="text-left">
-          <div className="flex items-center space-x-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6 text-blue-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 8c-4.418 0-8 1.79-8 4s3.582 4 8 4 8-1.79 8-4-3.582-4-8-4z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 12c-4.418 0-8 1.79-8 4s3.582 4 8 4 8-1.79 8-4-3.582-4-8-4z"
-              />
-            </svg>
-            <div>
-              <p className="text-sm">Vehicle Status</p>
-              <p className="text-xs text-gray-400">
-                No Attention Required as of 10/07/24 at 02:20 PM PDT
-              </p>
-            </div>
-          </div>
-          <div className="mt-2">
-            <a href="#" className="text-xs text-blue-400 hover:underline mr-4">
-              View Details
-            </a>
-            <a href="#" className="text-xs text-blue-400 hover:underline">
-              Important Info
-            </a>
-          </div>
+            View Information
+          </Link>
         </div>
       </div>
 

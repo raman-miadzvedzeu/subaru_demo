@@ -13,6 +13,7 @@ export default function Confirmation() {
       step={2}
       prevLink={"/upgrade"}
       nextLink={"/upgrade/confirmation/payment"}
+      nextIsDisabled={!termsAccepted}
     >
       <h2 className="text-2xl font-bold mb-4 text-gray-700">
         Subscription & Services

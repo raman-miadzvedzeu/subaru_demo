@@ -1,17 +1,21 @@
 "use client";
-import { Input, PaymentSuccessModal, StepFormContent } from "@/components";
+import { Input, PaymentSuccessModal, Preloader, StepFormContent } from "@/components";
 import { useVehicleStore } from "@/state";
 import { useState } from "react";
 
 export default function Payment() {
   const [paymentCompleted, setPaymentCompleted] = useState(false);
-  const { upgradeSubscription, selectedSubscriptionOption } = useVehicleStore(
+  const { upgradeSubscription, selectedSubscriptionOption, loading } = useVehicleStore(
     (state) => state
   );
 
   const onDataSubmit = async () => {
     if (selectedSubscriptionOption?.Id) {
-      await upgradeSubscription(selectedSubscriptionOption?.Id);
+      const ids = [selectedSubscriptionOption?.Id];
+      if (selectedSubscriptionOption.SubProducts) {
+        ids.push(...selectedSubscriptionOption.SubProducts.map((sub) => sub.Id));
+      }
+      await upgradeSubscription(ids);
       setPaymentCompleted(true);
     }
   };
@@ -22,6 +26,7 @@ export default function Payment() {
       prevLink={"/upgrade/confirmation"}
       onSubmit={onDataSubmit}
     >
+      {loading && <Preloader/>}
       <PaymentSuccessModal open={paymentCompleted} onClose={() => setPaymentCompleted(false)} />
       <h3 className="text-2xl font-bold mb-4 text-gray-700">
         Payment Information

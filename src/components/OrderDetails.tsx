@@ -1,11 +1,23 @@
 "use client";
 import { expirationDate } from "@/constants";
 import { useVehicleStore } from "@/state";
+import { useMemo } from "react";
 
 export const OrderDetails = () => {
   const selectedSubscriptionOption = useVehicleStore(
     (state) => state.selectedSubscriptionOption
   );
+
+  const total = useMemo<string>(() => {
+    if (!selectedSubscriptionOption?.Rate) {
+      return "$0.00";
+    }
+    let totalAmount = Number(selectedSubscriptionOption?.Rate.substring(1));
+    selectedSubscriptionOption?.SubProducts?.forEach((subProduct) => {
+      totalAmount += Number(subProduct.Rate.substring(1));
+    });
+    return `${selectedSubscriptionOption?.Rate.substring(0, 1)} ${totalAmount.toFixed(2)}`;
+  }, [selectedSubscriptionOption]);
 
   return (
     <>
@@ -23,7 +35,7 @@ export const OrderDetails = () => {
       </div>
       <div className="flex justify-between items-center mb-8 border-t pt-4 text-gray-800">
         <p className="text-lg font-bold">TOTAL</p>
-        <p className="text-lg font-bold">{selectedSubscriptionOption?.Rate}</p>
+        <p className="text-lg font-bold">{total}</p>
       </div>
     </>
   );

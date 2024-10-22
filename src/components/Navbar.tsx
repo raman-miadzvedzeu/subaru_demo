@@ -13,7 +13,7 @@ export const Navbar = () => {
         <a href="#" className="hover:underline">
           Vehicle Service & Maintenance
         </a>
-        <a href="#" className="hover:underline">
+        <a href="/subscriptions" className="hover:underline">
           Manage Subscriptions
         </a>
         <a href="#" className="hover:underline">
