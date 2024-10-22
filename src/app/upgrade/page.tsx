@@ -75,6 +75,7 @@ export default function Upgrade() {
           <div className="flex gap-2 items-center mt-2">
             {services.map((serv) => (
               <UpgradeOption
+                key={serv.Id}
                 size="small"
                 name={serv.Name}
                 price={serv.Rate}
